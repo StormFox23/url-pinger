@@ -20,15 +20,14 @@ on:
         description: 'Custom version (if version is custom)'
         required: false
         type: string
-      publish_marketplace:
-        description: 'Publish to VS Code Marketplace'
-        required: false
-        default: false
-        type: boolean
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: read
     
     steps:
     - name: Checkout code
@@ -50,11 +49,6 @@ jobs:
       run: |
         npm install -g @vscode/vsce
     
-    - name: Configure Git
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-    
     - name: Build release (on tag push)
       if: startsWith(github.ref, 'refs/tags/')
       run: node build-release.js --version=none --skip-tests --skip-lint --no-git
@@ -63,39 +57,22 @@ jobs:
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == 'patch'
       run: |
         node build-release.js --version=patch --skip-tests --skip-lint --no-git
-        git push origin main
-        NEW_VERSION=$(node -p "require('./package.json').version")
-        git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
-        git push origin "v$NEW_VERSION"
     
     - name: Build release (manual dispatch - minor)
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == 'minor'
       run: |
         node build-release.js --version=minor --skip-tests --skip-lint --no-git
-        git push origin main
-        NEW_VERSION=$(node -p "require('./package.json').version")
-        git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
-        git push origin "v$NEW_VERSION"
     
     - name: Build release (manual dispatch - major)
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == 'major'
       run: |
         node build-release.js --version=major --skip-tests --skip-lint --no-git
-        git push origin main
-        NEW_VERSION=$(node -p "require('./package.json').version")
-        git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
-        git push origin "v$NEW_VERSION"
     
     - name: Build release (manual dispatch - custom)
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == 'custom'
       run: |
         npm version ${{ github.event.inputs.custom_version }} --no-git-tag-version
         node build-release.js --version=none --skip-tests --skip-lint --no-git
-        git add .
-        git commit -m "Release version ${{ github.event.inputs.custom_version }}"
-        git push origin main
-        git tag -a "v${{ github.event.inputs.custom_version }}" -m "Release version ${{ github.event.inputs.custom_version }}"
-        git push origin "v${{ github.event.inputs.custom_version }}"
     
     - name: Get version
       id: version
@@ -136,16 +113,3 @@ jobs:
         asset_path: releases/url-pinger-${{ steps.version.outputs.version }}.vsix
         asset_name: url-pinger-${{ steps.version.outputs.version }}.vsix
         asset_content_type: application/zip
-    
-    - name: Publish to VS Code Marketplace
-      if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish_marketplace == 'true'
-      env:
-        VSCE_PAT: ${{ secrets.VSCE_PAT }}
-      run: |
-        if [ ! -z "$VSCE_PAT" ]; then
-          vsce publish --packagePath releases/url-pinger-${{ steps.version.outputs.version }}.vsix
-          echo "✅ Published to VS Code Marketplace"
-        else
-          echo "⚠️  VSCE_PAT secret not found. Skipping marketplace publication."
-          echo "To enable automatic marketplace publishing, add your VS Code Marketplace Personal Access Token as a GitHub secret named 'VSCE_PAT'"
-        fi

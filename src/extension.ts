@@ -8,7 +8,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(UrlPingerViewProvider.viewType, provider)
-	);
+	);                                                                                        
 
 	// Register new commands
 	context.subscriptions.push(
