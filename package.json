@@ -7,7 +7,7 @@
   "publisher": "your-publisher-name",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/url-pinger.git"
+    "url": "https://github.com/StormFox23/url-pinger.git"
   },
   "engines": {
     "vscode": "^1.102.0"
