@@ -90,7 +90,14 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "build:release": "node build-release.js",
+    "build:release:interactive": "node build-release.js --interactive",
+    "build:release:patch": "node build-release.js --version=patch",
+    "build:release:minor": "node build-release.js --version=minor",
+    "build:release:major": "node build-release.js --version=major",
+    "build:release:custom": "node build-release.js --version=custom",
+    "build:release:no-bump": "node build-release.js --version=none"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -101,7 +108,11 @@
     "@typescript-eslint/parser": "^8.31.1",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
+    "chalk": "^4.1.2",
     "eslint": "^9.25.1",
+    "inquirer": "^8.2.6",
+    "semver": "^7.7.2",
+    "shelljs": "^0.8.5",
     "typescript": "^5.8.3"
   },
   "dependencies": {

@@ -1,0 +1,21 @@
+{
+  "name": "url-pinger-release-builder",
+  "version": "1.0.0",
+  "description": "Automated release builder for URL Pinger VS Code extension",
+  "scripts": {
+    "build:release": "node build-release.js",
+    "build:release:interactive": "node build-release.js --interactive",
+    "build:release:patch": "node build-release.js --version=patch",
+    "build:release:minor": "node build-release.js --version=minor",
+    "build:release:major": "node build-release.js --version=major",
+    "build:release:custom": "node build-release.js --version=custom",
+    "build:release:no-bump": "node build-release.js --version=none"
+  },
+  "keywords": ["vscode", "extension", "release", "builder", "automation"],
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "inquirer": "^8.2.6",
+    "semver": "^7.6.0",
+    "shelljs": "^0.8.5"
+  }
+}

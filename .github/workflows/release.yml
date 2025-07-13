@@ -1,0 +1,147 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+        - custom
+      custom_version:
+        description: 'Custom version (if version is custom)'
+        required: false
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Install release builder dependencies
+      run: |
+        npm install -g @vscode/vsce
+        npm install chalk inquirer semver shelljs
+    
+    - name: Configure Git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+    
+    - name: Build release (on tag push)
+      if: startsWith(github.ref, 'refs/tags/')
+      run: npm run build:release:no-bump
+    
+    - name: Build release (manual dispatch - patch)
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == 'patch'
+      run: |
+        npm run build:release:patch
+        git push origin main
+        NEW_VERSION=$(node -p "require('./package.json').version")
+        git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
+        git push origin "v$NEW_VERSION"
+    
+    - name: Build release (manual dispatch - minor)
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == 'minor'
+      run: |
+        npm run build:release:minor
+        git push origin main
+        NEW_VERSION=$(node -p "require('./package.json').version")
+        git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
+        git push origin "v$NEW_VERSION"
+    
+    - name: Build release (manual dispatch - major)
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == 'major'
+      run: |
+        npm run build:release:major
+        git push origin main
+        NEW_VERSION=$(node -p "require('./package.json').version")
+        git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
+        git push origin "v$NEW_VERSION"
+    
+    - name: Build release (manual dispatch - custom)
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == 'custom'
+      run: |
+        npm version ${{ github.event.inputs.custom_version }} --no-git-tag-version
+        npm run build:release:no-bump
+        git add .
+        git commit -m "Release version ${{ github.event.inputs.custom_version }}"
+        git push origin main
+        git tag -a "v${{ github.event.inputs.custom_version }}" -m "Release version ${{ github.event.inputs.custom_version }}"
+        git push origin "v${{ github.event.inputs.custom_version }}"
+    
+    - name: Get version
+      id: version
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.version }}" == "custom" ]]; then
+          echo "version=${{ github.event.inputs.custom_version }}" >> $GITHUB_OUTPUT
+        else
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Upload release artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-artifacts
+        path: |
+          releases/url-pinger-${{ steps.version.outputs.version }}.vsix
+          releases/release-notes-${{ steps.version.outputs.version }}.md
+          CHANGELOG.md
+    
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        release_name: URL Pinger v${{ steps.version.outputs.version }}
+        body_path: releases/release-notes-${{ steps.version.outputs.version }}.md
+        draft: false
+        prerelease: false
+    
+    - name: Upload VSIX to GitHub Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: releases/url-pinger-${{ steps.version.outputs.version }}.vsix
+        asset_name: url-pinger-${{ steps.version.outputs.version }}.vsix
+        asset_content_type: application/zip
+    
+    - name: Publish to VS Code Marketplace
+      if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish_marketplace == 'true'
+      env:
+        VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      run: |
+        if [ ! -z "$VSCE_PAT" ]; then
+          vsce publish --packagePath releases/url-pinger-${{ steps.version.outputs.version }}.vsix
+          echo "✅ Published to VS Code Marketplace"
+        else
+          echo "⚠️  VSCE_PAT secret not found. Skipping marketplace publication."
+          echo "To enable automatic marketplace publishing, add your VS Code Marketplace Personal Access Token as a GitHub secret named 'VSCE_PAT'"
+        fi

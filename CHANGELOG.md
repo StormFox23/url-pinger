@@ -1,3 +1,14 @@
+## [0.1.0] - 2025-07-13
+
+### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 
+
 # Change Log
 
 All notable changes to the "url-pinger" extension will be documented in this file.
