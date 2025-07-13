@@ -1,10 +1,10 @@
 {
   "name": "url-pinger",
   "displayName": "URL Pinger",
-  "description": "Pings a URL to check if it's alive.",
+  "description": "Pings URLs to check if they're alive with advanced features like bulk testing, scheduling, and history.",
   "icon": "icon.png",
-  "version": "0.0.1",
-  "publisher": "your-publisher-name",
+  "version": "0.1.0",
+  "publisher": "StormFox23",
   "repository": {
     "type": "git",
     "url": "https://github.com/StormFox23/url-pinger.git"
@@ -19,8 +19,24 @@
   "contributes": {
     "commands": [
       {
-        "command": "url-pinger.helloWorld",
-        "title": "Hello World"
+        "command": "url-pinger.clearHistory",
+        "title": "Clear URL History",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "url-pinger.exportResults",
+        "title": "Export Results",
+        "icon": "$(export)"
+      },
+      {
+        "command": "url-pinger.bulkTest",
+        "title": "Bulk URL Test",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "url-pinger.scheduleTest",
+        "title": "Schedule Periodic Test",
+        "icon": "$(clock)"
       }
     ],
     "viewsContainers": {
@@ -41,6 +57,31 @@
           "icon": "$(globe)"
         }
       ]
+    },
+    "configuration": {
+      "title": "URL Pinger",
+      "properties": {
+        "urlPinger.defaultTimeout": {
+          "type": "number",
+          "default": 10000,
+          "description": "Default timeout for URL requests (in milliseconds)"
+        },
+        "urlPinger.maxHistorySize": {
+          "type": "number",
+          "default": 20,
+          "description": "Maximum number of URLs to keep in history"
+        },
+        "urlPinger.autoScheduleInterval": {
+          "type": "number",
+          "default": 60000,
+          "description": "Default interval for scheduled pings (in milliseconds)"
+        },
+        "urlPinger.enableNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable notifications for ping results"
+        }
+      }
     }
   },
   "scripts": {
