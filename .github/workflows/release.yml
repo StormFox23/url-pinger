@@ -20,6 +20,11 @@ on:
         description: 'Custom version (if version is custom)'
         required: false
         type: string
+      publish_marketplace:
+        description: 'Publish to VS Code Marketplace'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   release:
@@ -44,7 +49,6 @@ jobs:
     - name: Install release builder dependencies
       run: |
         npm install -g @vscode/vsce
-        npm install chalk inquirer semver shelljs
     
     - name: Configure Git
       run: |
