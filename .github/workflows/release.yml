@@ -53,12 +53,12 @@ jobs:
     
     - name: Build release (on tag push)
       if: startsWith(github.ref, 'refs/tags/')
-      run: npm run build:release:no-bump
+      run: node build-release.js --version=none --skip-tests --skip-lint --no-git
     
     - name: Build release (manual dispatch - patch)
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == 'patch'
       run: |
-        npm run build:release:patch
+        node build-release.js --version=patch --skip-tests --skip-lint --no-git
         git push origin main
         NEW_VERSION=$(node -p "require('./package.json').version")
         git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
@@ -67,7 +67,7 @@ jobs:
     - name: Build release (manual dispatch - minor)
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == 'minor'
       run: |
-        npm run build:release:minor
+        node build-release.js --version=minor --skip-tests --skip-lint --no-git
         git push origin main
         NEW_VERSION=$(node -p "require('./package.json').version")
         git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
@@ -76,7 +76,7 @@ jobs:
     - name: Build release (manual dispatch - major)
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == 'major'
       run: |
-        npm run build:release:major
+        node build-release.js --version=major --skip-tests --skip-lint --no-git
         git push origin main
         NEW_VERSION=$(node -p "require('./package.json').version")
         git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION"
@@ -86,7 +86,7 @@ jobs:
       if: github.event_name == 'workflow_dispatch' && github.event.inputs.version == 'custom'
       run: |
         npm version ${{ github.event.inputs.custom_version }} --no-git-tag-version
-        npm run build:release:no-bump
+        node build-release.js --version=none --skip-tests --skip-lint --no-git
         git add .
         git commit -m "Release version ${{ github.event.inputs.custom_version }}"
         git push origin main
